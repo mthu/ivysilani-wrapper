@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# uses ctstream perl script from http://xpisar.wz.cz/ctstream/
+
+# player to be used
+#PLAYER="player.binary --some-arg"
+PLAYER="vlc"
+
+function usage() {
+    echo "Usage:"
+    echo "  ivysilani <url> - prints available playlists"
+    echo "  ivysilani <url> <quality> - run player with given quality playlist"
+}
+
+if [ "$#" -lt 1 ]; then
+    usage
+    exit
+fi
+
+set -o pipefail
+
+bitrate=( $(ctstream -A -l "$1" | grep http:// | cut -f2 -d' ') ) 
+
+if [ $? -ne 0 ] || [ ${#bitrate[*]} -le 0 ]; then
+    usage
+    exit
+fi
+
+if { [ -n "$2" ] && [ "$2" -ge 0 ] && [ "$2" -lt ${#bitrate[*]} ]; } 2>/dev/null; then
+    $PLAYER "${bitrate[$2]}"
+else
+    echo Pick quality, the higher the better
+    for idx in "${!bitrate[@]}"; do
+        echo "$idx -> ${bitrate[idx]}"
+    done 
+    usage
+fi
